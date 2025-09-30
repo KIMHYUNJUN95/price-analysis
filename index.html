@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>가격 분석 캘린더 시스템 (v2.0)</title>
+    <title>가격 분석 캘린더 시스템 (v3.0 - 로그인)</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -58,6 +58,68 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
+        #auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--background-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .auth-box {
+            background-color: var(--container-bg);
+            padding: 30px 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        .auth-box h3 { margin-top: 0; margin-bottom: 20px; font-size: 24px; color: var(--text-color); }
+        .auth-box .form-group { margin-bottom: 15px; text-align: left; }
+        .auth-box label { font-size: 14px; margin-bottom: 5px; display: block; }
+        .auth-box input {
+            width: 100%; padding: 12px; box-sizing: border-box;
+            border: 1px solid var(--border-color); border-radius: 4px;
+            font-size: 16px; background-color: var(--input-bg); color: var(--text-color);
+        }
+        .auth-box button {
+            width: 100%; padding: 12px; background-color: var(--primary-color);
+            color: white; border: none; border-radius: 4px;
+            font-size: 16px; font-weight: 500; cursor: pointer;
+            transition: background-color 0.2s; margin-top: 10px;
+        }
+        .auth-box button:hover { background-color: var(--primary-hover-color); }
+        .auth-box .toggle-link {
+            margin-top: 20px; font-size: 14px; color: var(--primary-color);
+            cursor: pointer; text-decoration: underline;
+        }
+        .auth-box #auth-error {
+            color: var(--danger-color); margin-top: 15px;
+            font-size: 14px; min-height: 1.2em;
+        }
+        #signup-form { display: none; }
+
+        #user-info-panel {
+            background-color: var(--secondary-bg);
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        #user-email { font-size: 14px; font-weight: 500; }
+        #logout-button {
+            background-color: var(--danger-color); color: white;
+            border: none; padding: 6px 12px; border-radius: 4px;
+            cursor: pointer; font-size: 14px;
+        }
+        
         .container { display: flex; flex-wrap: wrap; gap: 30px; max-width: 1600px; margin: auto; }
         .main-content { flex: 3; min-width: 800px; display: flex; flex-direction: column; gap: 20px;}
         #calendar-container, #chart-container, #memo-board {
@@ -109,8 +171,6 @@
         .stats-block .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .stats-block .stat-grid h4 { font-size: 14px; margin-bottom: 2px;}
         .stats-block .stat-grid span { font-size: 20px; }
-        
-        /* Memo Section */
         #memo-list { max-height: 300px; overflow-y: auto; margin-bottom: 15px; border: 1px solid var(--border-color); padding: 10px; border-radius: 4px; }
         .memo-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px; border-bottom: 1px solid var(--border-color); border-radius: 4px; }
         .memo-item.important { background-color: var(--important-memo-bg); }
@@ -120,8 +180,6 @@
         #memo-input-container { display: flex; gap: 10px; align-items: center; }
         #memo-input { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; font-family: inherit; resize: vertical; min-height: 50px; background-color: var(--input-bg); color: var(--text-color);}
         #add-memo-btn { flex-shrink: 0; background-color: var(--primary-color); color: white; border: none; padding: 0 25px; border-radius: 4px; cursor: pointer; font-weight: 500; height: 50px; }
-
-        /* Dark Mode Toggle Switch */
         .theme-switch-wrapper { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 15px; gap: 10px; font-size: 14px; }
         .theme-switch { display: inline-block; height: 24px; position: relative; width: 48px; }
         .theme-switch input { display:none; }
@@ -135,7 +193,39 @@
 </head>
 <body>
 
-<div class="container">
+<div id="auth-container">
+    <div class="auth-box">
+        <form id="login-form">
+            <h3>로그인</h3>
+            <div class="form-group">
+                <label for="login-email">이메일</label>
+                <input type="email" id="login-email" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">비밀번호</label>
+                <input type="password" id="login-password" required>
+            </div>
+            <button type="submit">로그인</button>
+            <p class="toggle-link" id="show-signup">계정이 없으신가요? 회원가입</p>
+        </form>
+        <form id="signup-form">
+            <h3>회원가입</h3>
+            <div class="form-group">
+                <label for="signup-email">이메일</label>
+                <input type="email" id="signup-email" required>
+            </div>
+            <div class="form-group">
+                <label for="signup-password">비밀번호</label>
+                <input type="password" id="signup-password" required>
+            </div>
+            <button type="submit">회원가입</button>
+            <p class="toggle-link" id="show-login">이미 계정이 있으신가요? 로그인</p>
+        </form>
+        <p id="auth-error"></p>
+    </div>
+</div>
+
+<div class="container" style="display: none;">
     <div class="main-content">
         <div id="calendar-container">
             <div class="calendar-header">
@@ -171,6 +261,10 @@
                 <span class="slider round"></span>
             </label>
             <span>다크</span>
+        </div>
+        <div id="user-info-panel" style="display: none;">
+            <span id="user-email"></span>
+            <button id="logout-button">로그아웃</button>
         </div>
         <div id="total-revenue">
             <h3>전체 예상 매출 (선택 기록)</h3>
@@ -262,8 +356,9 @@
     // Firebase SDK import
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, deleteDoc, addDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    // NEW: Import Auth modules
+    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCfDvIZzwCkIea84swCEpaX17ecd86KkKI",
       authDomain: "price-analysis-haru.firebaseapp.com",
@@ -273,363 +368,261 @@
       appId: "1:796843748371:web:0b71d74f68cb7d971be3e6"
     };
 
-    // Initialize Firebase and Firestore
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    
+    const auth = getAuth(app);
+
     document.addEventListener('DOMContentLoaded', () => {
-        let currentDate = new Date(2026, 2, 1);
-        let prices = {};
-        let selectedDates = new Set();
-        let comparisonDates = [];
-        let currentRecordName = null;
-        let unsubscribe = null;
-        let holidays = {};
-        let priceChart = null;
+        
+        const authContainer = document.getElementById('auth-container');
+        const mainContainer = document.querySelector('.container');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const authError = document.getElementById('auth-error');
+        const userInfoPanel = document.getElementById('user-info-panel');
+        const userEmailEl = document.getElementById('user-email');
+        const logoutButton = document.getElementById('logout-button');
 
-        const calendarEl = document.getElementById('calendar');
-        const monthYearEl = document.getElementById('month-year');
-        const totalRevenueEl = document.getElementById('total-revenue-value');
-        const savedRecordsListEl = document.getElementById('saved-records-list');
-        const priceAnalysisEl = document.getElementById('price-analysis-summary');
-        const monthlyRevenueEl = document.getElementById('monthly-revenue-value');
-        const monthlyAveragePriceEl = document.getElementById('monthly-average-price-value');
-        const selectionAveragePriceEl = document.getElementById('selection-average-price-value');
-        const memoListEl = document.getElementById('memo-list');
-        const memoInputEl = document.getElementById('memo-input');
-        const addMemoBtn = document.getElementById('add-memo-btn');
-        const importantMemoCheckbox = document.getElementById('important-memo-checkbox');
-        const themeSlider = document.getElementById('theme-slider');
-
-        // Dark Mode Logic
-        themeSlider.addEventListener('change', () => {
-            if (themeSlider.checked) {
-                document.body.classList.add('dark-mode');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                document.body.classList.remove('dark-mode');
-                localStorage.setItem('theme', 'light');
-            }
-            renderPriceChart(); // Re-render chart for new theme
+        document.getElementById('show-signup').addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            authError.textContent = '';
+        });
+        document.getElementById('show-login').addEventListener('click', () => {
+            signupForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            authError.textContent = '';
         });
 
-        function loadTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                themeSlider.checked = true;
-            } else {
-                document.body.classList.remove('dark-mode');
-                themeSlider.checked = false;
-            }
-        }
-
-        async function fetchHolidays() {
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
             try {
-                const response = await fetch('https://holidays-jp.github.io/api/v1/date.json');
-                if (!response.ok) throw new Error('Network response was not ok');
-                holidays = await response.json();
-                console.log("일본 공휴일 데이터 로드 완료");
-                renderCalendar();
+                await createUserWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                console.error("공휴일 데이터를 불러오는 데 실패했습니다:", error);
+                authError.textContent = error.message;
             }
-        }
-        
-        // Memo functions (add, delete, listen) remain unchanged
-        async function addMemo() {
-            const memoText = memoInputEl.value.trim();
-            const isImportant = importantMemoCheckbox.checked;
-            if (!memoText) return;
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
             try {
-                await addDoc(collection(db, "memos"), { text: memoText, isImportant: isImportant, timestamp: serverTimestamp() });
-                memoInputEl.value = ""; importantMemoCheckbox.checked = false;
-            } catch (error) { console.error("메모 추가 오류:", error); alert("메모를 추가하는 데 실패했습니다."); }
-        }
-        async function deleteMemo(memoId) {
-            if (confirm("이 메모를 삭제하시겠습니까?")) {
-                try { await deleteDoc(doc(db, "memos", memoId)); } catch (error) { console.error("메모 삭제 오류:", error); alert("메모를 삭제하는 데 실패했습니다."); }
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                authError.textContent = "이메일 또는 비밀번호가 잘못되었습니다.";
             }
-        }
-        function listenToMemos() {
-            const q = query(collection(db, "memos"), orderBy("timestamp", "desc"));
-            onSnapshot(q, (querySnapshot) => {
-                memoListEl.innerHTML = "";
-                querySnapshot.forEach((doc) => {
-                    const memo = doc.data();
-                    const memoItem = document.createElement('div');
-                    memoItem.className = 'memo-item';
-                    if (memo.isImportant) { memoItem.classList.add('important'); }
-                    const content = document.createElement('div');
-                    content.className = 'memo-content';
-                    content.textContent = memo.text;
-                    const meta = document.createElement('div');
-                    meta.className = 'memo-timestamp';
-                    const timestamp = memo.timestamp ? memo.timestamp.toDate() : new Date();
-                    meta.innerHTML = `${timestamp.toLocaleDateString()} ${timestamp.toLocaleTimeString()}<button class="delete-memo-btn" data-id="${doc.id}">🗑️</button>`;
-                    memoItem.appendChild(content);
-                    memoItem.appendChild(meta);
-                    memoListEl.appendChild(memoItem);
-                });
-            });
-        }
-        
-        function updateAllStats() {
-             updateTotalRevenue();
-             updateMonthlyStats();
-             updatePriceComparison();
-             updateSelectionStats();
-             updateAdvancedStats();
-             renderPriceChart();
-        }
+        });
 
-        function renderCalendar() {
-            calendarEl.innerHTML = '';
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            monthYearEl.textContent = `${year}년 ${month + 1}월`;
-            calendarEl.insertAdjacentHTML('beforeend', `<div class="day-name" style="border-right: none;"></div>`);
-            ['일', '월', '화', '수', '목', '금', '토'].forEach(day => {
-                calendarEl.insertAdjacentHTML('beforeend', `<div class="day-name">${day}</div>`);
-            });
+        logoutButton.addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.reload();
+        });
 
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            let dateCounter = 1;
-            let dayElements = [];
-            for (let i = 0; i < 42; i++) {
-                if (i < firstDay || dateCounter > daysInMonth) {
-                    dayElements.push(`<div class="day not-in-month"></div>`);
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authContainer.style.display = 'none';
+                mainContainer.style.display = 'flex';
+                userInfoPanel.style.display = 'flex';
+                userEmailEl.textContent = user.email;
+                initializeApp();
+            } else {
+                authContainer.style.display = 'flex';
+                mainContainer.style.display = 'none';
+                userInfoPanel.style.display = 'none';
+            }
+        });
+
+        function initializeApp() {
+            let currentDate = new Date(2026, 2, 1);
+            let prices = {};
+            let selectedDates = new Set();
+            let comparisonDates = [];
+            let currentRecordName = null;
+            let unsubscribe = null;
+            let holidays = {};
+            let priceChart = null;
+
+            const calendarEl = document.getElementById('calendar');
+            const monthYearEl = document.getElementById('month-year');
+            const totalRevenueEl = document.getElementById('total-revenue-value');
+            const savedRecordsListEl = document.getElementById('saved-records-list');
+            const priceAnalysisEl = document.getElementById('price-analysis-summary');
+            const monthlyRevenueEl = document.getElementById('monthly-revenue-value');
+            const monthlyAveragePriceEl = document.getElementById('monthly-average-price-value');
+            const selectionAveragePriceEl = document.getElementById('selection-average-price-value');
+            const memoListEl = document.getElementById('memo-list');
+            const memoInputEl = document.getElementById('memo-input');
+            const addMemoBtn = document.getElementById('add-memo-btn');
+            const importantMemoCheckbox = document.getElementById('important-memo-checkbox');
+            const themeSlider = document.getElementById('theme-slider');
+
+            themeSlider.addEventListener('change', () => {
+                if (themeSlider.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
                 } else {
-                    const date = new Date(year, month, dateCounter);
-                    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                    const holidayName = holidays[dateString];
-                    let dayClass = 'day';
-                    const dayOfWeek = date.getDay();
-                    if (dayOfWeek === 0) dayClass += ' sunday';
-                    if (dayOfWeek === 6) dayClass += ' saturday';
-                    if (holidayName) dayClass += ' holiday';
-                    if (selectedDates.has(dateString)) dayClass += ' selected';
-                    if (comparisonDates.includes(dateString)) dayClass += ' comparison-selected';
-                    
-                    const price = prices[dateString] || '';
-                    const holidayHTML = holidayName ? `<div class="holiday-name">${holidayName}</div>` : '';
-                    dayElements.push(
-                        `<div class="${dayClass}" data-date="${dateString}">
-                            <div class="date-num">${dateCounter}</div>
-                            ${holidayHTML}
-                            <input type="number" class="price-input" value="${price}" placeholder="¥" data-date="${dateString}">
-                        </div>`
-                    );
-                    dateCounter++;
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
                 }
-            }
-
-            for (let i = 0; i < dayElements.length; i += 7) {
-                const weekSlice = dayElements.slice(i, i + 7);
-                let weekHTML = `<div class="week-selector" data-week="${Math.floor(i / 7) + 1}">W</div>`;
-                weekHTML += weekSlice.join('');
-                calendarEl.insertAdjacentHTML('beforeend', weekHTML);
-            }
-            updateAllStats();
-        }
-        
-        // --- NEW --- Chart Rendering Function
-        function renderPriceChart() {
-            const ctx = document.getElementById('priceChart').getContext('2d');
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
-            const labels = [];
-            const data = [];
-            
-            for (let i = 1; i <= daysInMonth; i++) {
-                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                labels.push(`${i}일`);
-                data.push(prices[dateString] || 0);
-            }
-
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const textColor = isDarkMode ? '#e9ecef' : '#212529';
-
-
-            if (priceChart) {
-                priceChart.destroy();
-            }
-
-            priceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: `${month + 1}월 가격 (JPY)`,
-                        data: data,
-                        borderColor: isDarkMode ? '#4dabf7' : '#007bff',
-                        backgroundColor: isDarkMode ? 'rgba(77, 171, 247, 0.2)' : 'rgba(0, 123, 255, 0.2)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) { return '¥' + value.toLocaleString(); },
-                                color: textColor
-                            },
-                             grid: { color: gridColor }
-                        },
-                        x: {
-                            ticks: { color: textColor },
-                            grid: { color: gridColor }
-                        }
-                    },
-                    plugins: {
-                        legend: { labels: { color: textColor } }
-                    }
-                }
+                renderPriceChart();
             });
-        }
 
-        // --- NEW --- Advanced Statistics Function
-        function updateAdvancedStats() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            let monthPrices = [];
-            let weekdayPrices = [];
-            let weekendPrices = [];
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark') {
+                    document.body.classList.add('dark-mode');
+                    themeSlider.checked = true;
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    themeSlider.checked = false;
+                }
+            }
 
-            for (const dateString in prices) {
-                const date = new Date(dateString + 'T00:00:00');
-                if (date.getFullYear() === year && date.getMonth() === month) {
-                    const price = Number(prices[dateString]);
-                    if (price > 0) {
-                        monthPrices.push(price);
-                        const dayOfWeek = date.getDay();
-                        if (dayOfWeek === 0 || dayOfWeek === 6) {
-                            weekendPrices.push(price);
-                        } else {
-                            weekdayPrices.push(price);
-                        }
-                    }
+            async function fetchHolidays() {
+                try {
+                    const response = await fetch('https://holidays-jp.github.io/api/v1/date.json');
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    holidays = await response.json();
+                    console.log("일본 공휴일 데이터 로드 완료");
+                    renderCalendar();
+                } catch (error) {
+                    console.error("공휴일 데이터를 불러오는 데 실패했습니다:", error);
                 }
             }
             
-            const maxPrice = monthPrices.length > 0 ? Math.max(...monthPrices) : 0;
-            const minPrice = monthPrices.length > 0 ? Math.min(...monthPrices) : 0;
-            const weekdayAvg = weekdayPrices.length > 0 ? Math.round(weekdayPrices.reduce((a, b) => a + b, 0) / weekdayPrices.length) : 0;
-            const weekendAvg = weekendPrices.length > 0 ? Math.round(weekendPrices.reduce((a, b) => a + b, 0) / weekendPrices.length) : 0;
-
-            document.getElementById('max-price-value').textContent = `¥ ${maxPrice.toLocaleString()}`;
-            document.getElementById('min-price-value').textContent = `¥ ${minPrice.toLocaleString()}`;
-            document.getElementById('weekday-avg-value').textContent = `¥ ${weekdayAvg.toLocaleString()}`;
-            document.getElementById('weekend-avg-value').textContent = `¥ ${weekendAvg.toLocaleString()}`;
-        }
-        
-        // --- MODIFIED --- Enhanced Excel Export
-        function exportToExcel() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            async function addMemo() { const memoText = memoInputEl.value.trim(); const isImportant = importantMemoCheckbox.checked; if (!memoText) return; try { await addDoc(collection(db, "memos"), { text: memoText, isImportant: isImportant, timestamp: serverTimestamp() }); memoInputEl.value = ""; importantMemoCheckbox.checked = false; } catch (error) { console.error("메모 추가 오류:", error); alert("메모를 추가하는 데 실패했습니다."); } }
+            async function deleteMemo(memoId) { if (confirm("이 메모를 삭제하시겠습니까?")) { try { await deleteDoc(doc(db, "memos", memoId)); } catch (error) { console.error("메모 삭제 오류:", error); alert("메모를 삭제하는 데 실패했습니다."); } } }
+            function listenToMemos() { const q = query(collection(db, "memos"), orderBy("timestamp", "desc")); onSnapshot(q, (querySnapshot) => { memoListEl.innerHTML = ""; querySnapshot.forEach((doc) => { const memo = doc.data(); const memoItem = document.createElement('div'); memoItem.className = 'memo-item'; if (memo.isImportant) { memoItem.classList.add('important'); } const content = document.createElement('div'); content.className = 'memo-content'; content.textContent = memo.text; const meta = document.createElement('div'); meta.className = 'memo-timestamp'; const timestamp = memo.timestamp ? memo.timestamp.toDate() : new Date(); meta.innerHTML = `${timestamp.toLocaleDateString()} ${timestamp.toLocaleTimeString()}<button class="delete-memo-btn" data-id="${doc.id}">🗑️</button>`; memoItem.appendChild(content); memoItem.appendChild(meta); memoListEl.appendChild(memoItem); }); }); }
             
-            // 1. Prepare Summary Data
-            const monthlyRevenue = Object.entries(prices).filter(([d, p]) => new Date(d+'T00:00:00').getMonth() === month).reduce((sum, [, p]) => sum + Number(p), 0);
-            const daysWithPrice = Object.entries(prices).filter(([d, p]) => new Date(d+'T00:00:00').getMonth() === month && Number(p) > 0).length;
-            const monthlyAverage = daysWithPrice > 0 ? Math.round(monthlyRevenue / daysWithPrice) : 0;
-            const maxPrice = document.getElementById('max-price-value').textContent;
-            const minPrice = document.getElementById('min-price-value').textContent;
-            
-            const summaryData = [
-                [`${year}년 ${month + 1}월 가격 리포트`],
-                [],
-                ["요약", ""],
-                ["월 총 매출", `¥ ${monthlyRevenue.toLocaleString()}`],
-                ["월 평균 단가", `¥ ${monthlyAverage.toLocaleString()}`],
-                ["최고가", maxPrice],
-                ["최저가", minPrice],
-                [],
-                ["상세 데이터"]
-            ];
-
-            // 2. Prepare Detailed Data
-            const excelData = [['날짜', '요일', '구분', '가격 (JPY)']];
-            for (let i = 1; i <= daysInMonth; i++) {
-                const date = new Date(year, month, i);
-                const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                const dayName = dayNames[date.getDay()];
-                const holidayName = holidays[dateString] || '';
-                const price = prices[dateString] || 0;
-                let type = '';
-                if(holidayName) type = `공휴일 (${holidayName})`;
-                else if (date.getDay() === 0 || date.getDay() === 6) type = '주말';
-                
-                excelData.push([dateString, dayName, type, price]);
+            function updateAllStats() { updateTotalRevenue(); updateMonthlyStats(); updatePriceComparison(); updateSelectionStats(); updateAdvancedStats(); renderPriceChart(); }
+            function renderCalendar() {
+                calendarEl.innerHTML = '';
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                monthYearEl.textContent = `${year}년 ${month + 1}월`;
+                calendarEl.insertAdjacentHTML('beforeend', `<div class="day-name" style="border-right: none;"></div>`);
+                ['일', '월', '화', '수', '목', '금', '토'].forEach(day => { calendarEl.insertAdjacentHTML('beforeend', `<div class="day-name">${day}</div>`); });
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                let dateCounter = 1;
+                let dayElements = [];
+                for (let i = 0; i < 42; i++) {
+                    if (i < firstDay || dateCounter > daysInMonth) { dayElements.push(`<div class="day not-in-month"></div>`); } else {
+                        const date = new Date(year, month, dateCounter);
+                        const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                        const holidayName = holidays[dateString];
+                        let dayClass = 'day';
+                        const dayOfWeek = date.getDay();
+                        if (dayOfWeek === 0) dayClass += ' sunday'; if (dayOfWeek === 6) dayClass += ' saturday'; if (holidayName) dayClass += ' holiday'; if (selectedDates.has(dateString)) dayClass += ' selected'; if (comparisonDates.includes(dateString)) dayClass += ' comparison-selected';
+                        const price = prices[dateString] || '';
+                        const holidayHTML = holidayName ? `<div class="holiday-name">${holidayName}</div>` : '';
+                        dayElements.push(`<div class="${dayClass}" data-date="${dateString}"><div class="date-num">${dateCounter}</div>${holidayHTML}<input type="number" class="price-input" value="${price}" placeholder="¥" data-date="${dateString}"></div>`);
+                        dateCounter++;
+                    }
+                }
+                for (let i = 0; i < dayElements.length; i += 7) { const weekSlice = dayElements.slice(i, i + 7); let weekHTML = `<div class="week-selector" data-week="${Math.floor(i / 7) + 1}">W</div>`; weekHTML += weekSlice.join(''); calendarEl.insertAdjacentHTML('beforeend', weekHTML); }
+                updateAllStats();
             }
+            function renderPriceChart() {
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const labels = []; const data = [];
+                for (let i = 1; i <= daysInMonth; i++) { const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`; labels.push(`${i}일`); data.push(prices[dateString] || 0); }
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                const textColor = isDarkMode ? '#e9ecef' : '#212529';
+                if (priceChart) { priceChart.destroy(); }
+                priceChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: `${month + 1}월 가격 (JPY)`, data: data, borderColor: isDarkMode ? '#4dabf7' : '#007bff', backgroundColor: isDarkMode ? 'rgba(77, 171, 247, 0.2)' : 'rgba(0, 123, 255, 0.2)', borderWidth: 2, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return '¥' + value.toLocaleString(); }, color: textColor }, grid: { color: gridColor } }, x: { ticks: { color: textColor }, grid: { color: gridColor } } }, plugins: { legend: { labels: { color: textColor } } } } });
+            }
+            function updateAdvancedStats() {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                let monthPrices = []; let weekdayPrices = []; let weekendPrices = [];
+                for (const dateString in prices) {
+                    const date = new Date(dateString + 'T00:00:00');
+                    if (date.getFullYear() === year && date.getMonth() === month) {
+                        const price = Number(prices[dateString]);
+                        if (price > 0) {
+                            monthPrices.push(price); const dayOfWeek = date.getDay();
+                            if (dayOfWeek === 0 || dayOfWeek === 6) { weekendPrices.push(price); } else { weekdayPrices.push(price); }
+                        }
+                    }
+                }
+                const maxPrice = monthPrices.length > 0 ? Math.max(...monthPrices) : 0;
+                const minPrice = monthPrices.length > 0 ? Math.min(...monthPrices) : 0;
+                const weekdayAvg = weekdayPrices.length > 0 ? Math.round(weekdayPrices.reduce((a, b) => a + b, 0) / weekdayPrices.length) : 0;
+                const weekendAvg = weekendPrices.length > 0 ? Math.round(weekendPrices.reduce((a, b) => a + b, 0) / weekendPrices.length) : 0;
+                document.getElementById('max-price-value').textContent = `¥ ${maxPrice.toLocaleString()}`; document.getElementById('min-price-value').textContent = `¥ ${minPrice.toLocaleString()}`; document.getElementById('weekday-avg-value').textContent = `¥ ${weekdayAvg.toLocaleString()}`; document.getElementById('weekend-avg-value').textContent = `¥ ${weekendAvg.toLocaleString()}`;
+            }
+            function exportToExcel() {
+                const year = currentDate.getFullYear(); const month = currentDate.getMonth(); const daysInMonth = new Date(year, month + 1, 0).getDate(); const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+                const monthlyRevenue = Object.entries(prices).filter(([d, p]) => new Date(d+'T00:00:00').getMonth() === month).reduce((sum, [, p]) => sum + Number(p), 0);
+                const daysWithPrice = Object.entries(prices).filter(([d, p]) => new Date(d+'T00:00:00').getMonth() === month && Number(p) > 0).length;
+                const monthlyAverage = daysWithPrice > 0 ? Math.round(monthlyRevenue / daysWithPrice) : 0;
+                const maxPrice = document.getElementById('max-price-value').textContent; const minPrice = document.getElementById('min-price-value').textContent;
+                const summaryData = [[`${year}년 ${month + 1}월 가격 리포트`], [], ["요약", ""], ["월 총 매출", `¥ ${monthlyRevenue.toLocaleString()}`], ["월 평균 단가", `¥ ${monthlyAverage.toLocaleString()}`], ["최고가", maxPrice], ["최저가", minPrice], [], ["상세 데이터"]];
+                const excelData = [['날짜', '요일', '구분', '가격 (JPY)']];
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const date = new Date(year, month, i);
+                    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    const dayName = dayNames[date.getDay()]; const holidayName = holidays[dateString] || ''; const price = prices[dateString] || 0; let type = '';
+                    if(holidayName) type = `공휴일 (${holidayName})`; else if (date.getDay() === 0 || date.getDay() === 6) type = '주말';
+                    excelData.push([dateString, dayName, type, price]);
+                }
+                const summarySheet = XLSX.utils.aoa_to_sheet(summaryData, {skipHeader: true}); XLSX.utils.sheet_add_aoa(summarySheet, excelData, {origin: "A10"});
+                summarySheet['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }];
+                const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, summarySheet, `${year}년 ${month + 1}월`);
+                XLSX.writeFile(workbook, `가격리포트_${year}-${String(month + 1).padStart(2, '0')}.xlsx`);
+            }
+            function listenToRecord(recordName) { if (unsubscribe) { unsubscribe(); } if (!recordName) { prices = {}; renderCalendar(); return; } currentRecordName = recordName; const docRef = doc(db, "records", recordName); unsubscribe = onSnapshot(docRef, (docSnap) => { prices = docSnap.exists() ? (docSnap.data().data || {}) : {}; console.log("실시간 데이터 수신:", prices); renderCalendar(); }); }
+            async function saveNewRecord() { const name = document.getElementById('save-name').value.trim(); if (!name) { alert('생성할 기록의 이름을 입력해주세요.'); return; } try { await setDoc(doc(db, "records", name), { data: {} }); alert(`'${name}' 기록이 온라인에 생성되었습니다.`); document.getElementById('save-name').value = ''; await populateRecordsList(); savedRecordsListEl.value = name; listenToRecord(name); } catch (error) { console.error("기록 생성 중 오류: ", error); alert("기록 생성에 실패했습니다."); } }
+            async function deleteCurrentRecord() { const name = savedRecordsListEl.value; if (!name) { alert('삭제할 기록을 목록에서 선택해주세요.'); return; } if (confirm(`'${name}' 기록을 정말로 삭제하시겠습니까?`)) { try { await deleteDoc(doc(db, "records", name)); alert(`'${name}' 기록이 삭제되었습니다.`); currentRecordName = null; prices = {}; await populateRecordsList(); renderCalendar(); } catch (error) { console.error("기록 삭제 중 오류: ", error); alert("기록 삭제에 실패했습니다."); } } }
+            async function populateRecordsList() { try { const querySnapshot = await getDocs(collection(db, "records")); const oldSelection = savedRecordsListEl.value; savedRecordsListEl.innerHTML = '<option value="">불러올 기록을 선택하세요</option>'; querySnapshot.forEach((doc) => { const option = document.createElement('option'); option.value = doc.id; option.textContent = doc.id; savedRecordsListEl.appendChild(option); }); if (oldSelection) { savedRecordsListEl.value = oldSelection; } } catch (error) { console.error("기록 목록 로딩 중 오류: ", error); } }
+            async function updatePrice(date, price) { if (price > 0) { prices[date] = price; } else { delete prices[date]; } updateAllStats(); if (currentRecordName) { try { await setDoc(doc(db, "records", currentRecordName), { data: prices }); console.log(`${currentRecordName}에 자동 저장 완료`); } catch (error) { console.error("자동 저장 실패: ", error); } } }
+            function clearAllPrices() { if (!currentRecordName) { alert('먼저 기록을 선택해주세요.'); return; } if (confirm('정말로 현재 기록의 모든 가격을 삭제하시겠습니까?')) { prices = {}; updatePrice(); } }
+            function updateMonthlyStats() { const year = currentDate.getFullYear(); const month = currentDate.getMonth(); let monthlyRevenue = 0; let dayCountWithPrice = 0; for (const dateString in prices) { const date = new Date(dateString + 'T00:00:00'); if (date.getFullYear() === year && date.getMonth() === month) { monthlyRevenue += Number(prices[dateString]); dayCountWithPrice++; } } const monthlyAveragePrice = dayCountWithPrice > 0 ? Math.round(monthlyRevenue / dayCountWithPrice) : 0; monthlyRevenueEl.textContent = `¥ ${monthlyRevenue.toLocaleString()}`; monthlyAveragePriceEl.textContent = `¥ ${monthlyAveragePrice.toLocaleString()}`; }
+            function updatePriceComparison() { if (comparisonDates.length < 2) { if (comparisonDates.length === 1) { const date = new Date(comparisonDates[0] + 'T00:00:00'); priceAnalysisEl.innerHTML = `📊 <strong>${date.getMonth() + 1}월 ${date.getDate()}일</strong>과 비교할 두 번째 날짜를 선택하세요.`; } else { priceAnalysisEl.innerHTML = '📊 가격을 비교할 날짜의 빈 공간을 클릭하세요.'; } return; } const [dateStr1, dateStr2] = comparisonDates; const price1 = prices[dateStr1]; const price2 = prices[dateStr2]; const d1 = new Date(dateStr1 + 'T00:00:00'); const d2 = new Date(dateStr2 + 'T00:00:00'); const formattedDate1 = `${d1.getMonth() + 1}월 ${d1.getDate()}일`; const formattedDate2 = `${d2.getMonth() + 1}월 ${d2.getDate()}일`; let resultText = ''; if (!price1 || !price2) { resultText = `❗ 선택된 날짜 중 가격이 입력되지 않은 날짜가 있습니다.`; } else { const difference = price2 - price1; if (price1 === 0) { resultText = `❗ 기준 날짜(${formattedDate1})의 가격이 0이라 비교할 수 없습니다.`; } else if (difference === 0) { resultText = `🗓️ <strong>${formattedDate2}</strong>과(와) <strong>${formattedDate1}</strong>의 가격은 동일합니다.`; } else { const percentage = (difference / price1) * 100; const status = percentage > 0 ? '비쌉니다' : '저렴합니다'; resultText = `🗓️ <strong>${formattedDate2}</strong>은(는) <strong>${formattedDate1}</strong>보다 <strong>${Math.abs(percentage).toFixed(1)}%</strong> ${status}.`; } } priceAnalysisEl.innerHTML = `${resultText}<button class="comparison-reset-btn">비교 초기화</button>`; }
+            function resetComparison() { comparisonDates = []; document.querySelectorAll('.day.comparison-selected').forEach(el => el.classList.remove('comparison-selected')); updatePriceComparison(); }
+            function updateTotalRevenue() { const total = Object.values(prices).reduce((sum, price) => sum + Number(price), 0); totalRevenueEl.textContent = `¥ ${total.toLocaleString()}`; }
+            function updateSelectionUI() { document.querySelectorAll('.day[data-date]').forEach(day => { day.classList.toggle('selected', selectedDates.has(day.dataset.date)); }); updateSelectionStats(); }
+            function updateSelectionStats() { if (selectedDates.size === 0) { selectionAveragePriceEl.textContent = '¥ 0'; return; } let total = 0; let count = 0; selectedDates.forEach(date => { if (prices[date]) { total += Number(prices[date]); count++; } }); const average = count > 0 ? Math.round(total / count) : 0; selectionAveragePriceEl.textContent = `¥ ${average.toLocaleString()}`; }
+            function updateCalculatedPrice() { const basePrice = parseFloat(document.getElementById('base-price').value) || 0; const percent = parseFloat(document.getElementById('base-percent').value) || 0; const result = basePrice * (1 + percent / 100); document.getElementById('calculated-price').textContent = `¥ ${Math.round(result).toLocaleString()}`; }
 
-            // 3. Create Worksheet and Workbook
-            const summarySheet = XLSX.utils.aoa_to_sheet(summaryData, {skipHeader: true});
-            const mainSheet = XLSX.utils.aoa_to_sheet(excelData, {skipHeader: true});
-            
-            // Start main data after summary data
-            XLSX.utils.sheet_add_aoa(summarySheet, excelData, {origin: "A10"});
+            addMemoBtn.addEventListener('click', addMemo);
+            memoListEl.addEventListener('click', (e) => { if (e.target.classList.contains('delete-memo-btn')) { deleteMemo(e.target.dataset.id); } });
+            document.getElementById('save-data').addEventListener('click', saveNewRecord);
+            savedRecordsListEl.addEventListener('change', (e) => listenToRecord(e.target.value));
+            document.getElementById('delete-data').addEventListener('click', deleteCurrentRecord);
+            document.getElementById('export-excel').addEventListener('click', exportToExcel);
+            document.getElementById('clear-calendar').addEventListener('click', clearAllPrices);
+            document.getElementById('prev-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
+            document.getElementById('next-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
+            priceAnalysisEl.addEventListener('click', e => { if (e.target.classList.contains('comparison-reset-btn')) { resetComparison(); }});
+            calendarEl.addEventListener('change', e => { if (e.target.classList.contains('price-input')) { updatePrice(e.target.dataset.date, parseFloat(e.target.value)); } });
+            calendarEl.addEventListener('click', e => { if (e.target.classList.contains('price-input')) { return; } const dayEl = e.target.closest('.day[data-date]'); if (dayEl) { const date = dayEl.dataset.date; if (e.ctrlKey || e.metaKey) { if (selectedDates.has(date)) selectedDates.delete(date); else selectedDates.add(date); updateSelectionUI(); } else { const index = comparisonDates.indexOf(date); if (index > -1) { comparisonDates.splice(index, 1); } else { if (comparisonDates.length >= 2) comparisonDates.shift(); comparisonDates.push(date); } renderCalendar(); } } const weekEl = e.target.closest('.week-selector'); if (weekEl) { const weekRowDays = Array.from(weekEl.parentElement.querySelectorAll('.day[data-date]')); const allSelectedInWeek = weekRowDays.every(day => selectedDates.has(day.dataset.date)); weekRowDays.forEach(day => { if (allSelectedInWeek) { selectedDates.delete(day.dataset.date); } else { selectedDates.add(day.dataset.date); } }); updateSelectionUI(); } });
+            document.getElementById('select-weekdays').addEventListener('click', () => { document.querySelectorAll('.day[data-date]:not(.saturday):not(.sunday)').forEach(day => selectedDates.add(day.dataset.date)); updateSelectionUI(); });
+            document.getElementById('select-weekends').addEventListener('click', () => { document.querySelectorAll('.day.saturday[data-date], .day.sunday[data-date]').forEach(day => selectedDates.add(day.dataset.date)); updateSelectionUI(); });
+            document.getElementById('clear-selection').addEventListener('click', () => { selectedDates.clear(); updateSelectionUI(); });
+            ['base-price', 'base-percent'].forEach(id => { document.getElementById(id).addEventListener('input', updateCalculatedPrice); });
+            document.getElementById('apply-bulk-price').addEventListener('click', () => { const basePrice = parseFloat(document.getElementById('base-price').value) || 0; const percent = parseFloat(document.getElementById('base-percent').value) || 0; const finalPrice = Math.round(basePrice * (1 + percent / 100)); if (finalPrice <= 0 || !currentRecordName) { alert('유효한 가격을 입력하고, 먼저 기록을 선택해주세요.'); return; } if (selectedDates.size === 0) { alert('가격을 적용할 날짜를 먼저 선택하세요. (Ctrl/Cmd + 클릭)'); return; } selectedDates.forEach(date => updatePrice(date, finalPrice)); });
+            document.getElementById('apply-increase-percent').addEventListener('click', () => { const percent = parseFloat(document.getElementById('increase-percent').value); if (isNaN(percent) || !currentRecordName) { alert('인상률(%)을 숫자로 입력하고, 먼저 기록을 선택해주세요.'); return; } if (selectedDates.size === 0) { alert('가격을 인상할 날짜를 먼저 선택하세요. (Ctrl/Cmd + 클릭)'); return; } selectedDates.forEach(date => { const currentPrice = prices[date] || 0; if (currentPrice > 0) { const newPrice = Math.round(currentPrice * (1 + percent / 100)); updatePrice(date, newPrice); } }); });
+            document.getElementById('apply-decrease-percent').addEventListener('click', () => { const percent = parseFloat(document.getElementById('decrease-percent').value); if (isNaN(percent) || percent < 0 || !currentRecordName) { alert('인하율(%)을 양수 숫자로 입력하고, 먼저 기록을 선택해주세요.'); return; } if (selectedDates.size === 0) { alert('가격을 인하할 날짜를 먼저 선택하세요. (Ctrl/Cmd + 클릭)'); return; } selectedDates.forEach(date => { const currentPrice = prices[date] || 0; if (currentPrice > 0) { const newPrice = Math.round(currentPrice * (1 - percent / 100)); updatePrice(date, newPrice >= 0 ? newPrice : 0); } }); });
 
-            summarySheet['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }];
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, summarySheet, `${year}년 ${month + 1}월`);
-            XLSX.writeFile(workbook, `가격리포트_${year}-${String(month + 1).padStart(2, '0')}.xlsx`);
+            loadTheme();
+            fetchHolidays();
+            populateRecordsList();
+            listenToMemos();
+            renderCalendar();
+            updateCalculatedPrice();
         }
-
-        // Firestore and other functions (mostly unchanged, but with calls to new update functions)
-        function listenToRecord(recordName) { if (unsubscribe) { unsubscribe(); } if (!recordName) { prices = {}; renderCalendar(); return; } currentRecordName = recordName; const docRef = doc(db, "records", recordName); unsubscribe = onSnapshot(docRef, (docSnap) => { prices = docSnap.exists() ? (docSnap.data().data || {}) : {}; console.log("실시간 데이터 수신:", prices); renderCalendar(); }); }
-        async function saveNewRecord() { const name = document.getElementById('save-name').value.trim(); if (!name) { alert('생성할 기록의 이름을 입력해주세요.'); return; } try { await setDoc(doc(db, "records", name), { data: {} }); alert(`'${name}' 기록이 온라인에 생성되었습니다.`); document.getElementById('save-name').value = ''; await populateRecordsList(); savedRecordsListEl.value = name; listenToRecord(name); } catch (error) { console.error("기록 생성 중 오류: ", error); alert("기록 생성에 실패했습니다."); } }
-        async function deleteCurrentRecord() { const name = savedRecordsListEl.value; if (!name) { alert('삭제할 기록을 목록에서 선택해주세요.'); return; } if (confirm(`'${name}' 기록을 정말로 삭제하시겠습니까?`)) { try { await deleteDoc(doc(db, "records", name)); alert(`'${name}' 기록이 삭제되었습니다.`); currentRecordName = null; prices = {}; await populateRecordsList(); renderCalendar(); } catch (error) { console.error("기록 삭제 중 오류: ", error); alert("기록 삭제에 실패했습니다."); } } }
-        async function populateRecordsList() { try { const querySnapshot = await getDocs(collection(db, "records")); const oldSelection = savedRecordsListEl.value; savedRecordsListEl.innerHTML = '<option value="">불러올 기록을 선택하세요</option>'; querySnapshot.forEach((doc) => { const option = document.createElement('option'); option.value = doc.id; option.textContent = doc.id; savedRecordsListEl.appendChild(option); }); if (oldSelection) { savedRecordsListEl.value = oldSelection; } } catch (error) { console.error("기록 목록 로딩 중 오류: ", error); } }
-        async function updatePrice(date, price) { if (price > 0) { prices[date] = price; } else { delete prices[date]; } updateAllStats(); if (currentRecordName) { try { await setDoc(doc(db, "records", currentRecordName), { data: prices }); console.log(`${currentRecordName}에 자동 저장 완료`); } catch (error) { console.error("자동 저장 실패: ", error); } } }
-        function clearAllPrices() { if (!currentRecordName) { alert('먼저 기록을 선택해주세요.'); return; } if (confirm('정말로 현재 기록의 모든 가격을 삭제하시겠습니까?')) { prices = {}; updatePrice(); } }
-        function updateMonthlyStats() { const year = currentDate.getFullYear(); const month = currentDate.getMonth(); let monthlyRevenue = 0; let dayCountWithPrice = 0; for (const dateString in prices) { const date = new Date(dateString + 'T00:00:00'); if (date.getFullYear() === year && date.getMonth() === month) { monthlyRevenue += Number(prices[dateString]); dayCountWithPrice++; } } const monthlyAveragePrice = dayCountWithPrice > 0 ? Math.round(monthlyRevenue / dayCountWithPrice) : 0; monthlyRevenueEl.textContent = `¥ ${monthlyRevenue.toLocaleString()}`; monthlyAveragePriceEl.textContent = `¥ ${monthlyAveragePrice.toLocaleString()}`; }
-        function updatePriceComparison() { if (comparisonDates.length < 2) { if (comparisonDates.length === 1) { const date = new Date(comparisonDates[0] + 'T00:00:00'); priceAnalysisEl.innerHTML = `📊 <strong>${date.getMonth() + 1}월 ${date.getDate()}일</strong>과 비교할 두 번째 날짜를 선택하세요.`; } else { priceAnalysisEl.innerHTML = '📊 가격을 비교할 날짜의 빈 공간을 클릭하세요.'; } return; } const [dateStr1, dateStr2] = comparisonDates; const price1 = prices[dateStr1]; const price2 = prices[dateStr2]; const d1 = new Date(dateStr1 + 'T00:00:00'); const d2 = new Date(dateStr2 + 'T00:00:00'); const formattedDate1 = `${d1.getMonth() + 1}월 ${d1.getDate()}일`; const formattedDate2 = `${d2.getMonth() + 1}월 ${d2.getDate()}일`; let resultText = ''; if (!price1 || !price2) { resultText = `❗ 선택된 날짜 중 가격이 입력되지 않은 날짜가 있습니다.`; } else { const difference = price2 - price1; if (price1 === 0) { resultText = `❗ 기준 날짜(${formattedDate1})의 가격이 0이라 비교할 수 없습니다.`; } else if (difference === 0) { resultText = `🗓️ <strong>${formattedDate2}</strong>과(와) <strong>${formattedDate1}</strong>의 가격은 동일합니다.`; } else { const percentage = (difference / price1) * 100; const status = percentage > 0 ? '비쌉니다' : '저렴합니다'; resultText = `🗓️ <strong>${formattedDate2}</strong>은(는) <strong>${formattedDate1}</strong>보다 <strong>${Math.abs(percentage).toFixed(1)}%</strong> ${status}.`; } } priceAnalysisEl.innerHTML = `${resultText}<button class="comparison-reset-btn">비교 초기화</button>`; }
-        function resetComparison() { comparisonDates = []; document.querySelectorAll('.day.comparison-selected').forEach(el => el.classList.remove('comparison-selected')); updatePriceComparison(); }
-        function updateTotalRevenue() { const total = Object.values(prices).reduce((sum, price) => sum + Number(price), 0); totalRevenueEl.textContent = `¥ ${total.toLocaleString()}`; }
-        function updateSelectionUI() { document.querySelectorAll('.day[data-date]').forEach(day => { day.classList.toggle('selected', selectedDates.has(day.dataset.date)); }); updateSelectionStats(); }
-        function updateSelectionStats() { if (selectedDates.size === 0) { selectionAveragePriceEl.textContent = '¥ 0'; return; } let total = 0; let count = 0; selectedDates.forEach(date => { if (prices[date]) { total += Number(prices[date]); count++; } }); const average = count > 0 ? Math.round(total / count) : 0; selectionAveragePriceEl.textContent = `¥ ${average.toLocaleString()}`; }
-        function updateCalculatedPrice() { const basePrice = parseFloat(document.getElementById('base-price').value) || 0; const percent = parseFloat(document.getElementById('base-percent').value) || 0; const result = basePrice * (1 + percent / 100); document.getElementById('calculated-price').textContent = `¥ ${Math.round(result).toLocaleString()}`; }
-
-        // --- Event Listeners ---
-        addMemoBtn.addEventListener('click', addMemo);
-        memoListEl.addEventListener('click', (e) => { if (e.target.classList.contains('delete-memo-btn')) { deleteMemo(e.target.dataset.id); } });
-        document.getElementById('save-data').addEventListener('click', saveNewRecord);
-        savedRecordsListEl.addEventListener('change', (e) => listenToRecord(e.target.value));
-        document.getElementById('delete-data').addEventListener('click', deleteCurrentRecord);
-        document.getElementById('export-excel').addEventListener('click', exportToExcel);
-        document.getElementById('clear-calendar').addEventListener('click', clearAllPrices);
-        document.getElementById('prev-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
-        document.getElementById('next-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
-        priceAnalysisEl.addEventListener('click', e => { if (e.target.classList.contains('comparison-reset-btn')) { resetComparison(); }});
-        calendarEl.addEventListener('change', e => { if (e.target.classList.contains('price-input')) { updatePrice(e.target.dataset.date, parseFloat(e.target.value)); } });
-        calendarEl.addEventListener('click', e => { if (e.target.classList.contains('price-input')) { return; } const dayEl = e.target.closest('.day[data-date]'); if (dayEl) { const date = dayEl.dataset.date; if (e.ctrlKey || e.metaKey) { if (selectedDates.has(date)) selectedDates.delete(date); else selectedDates.add(date); updateSelectionUI(); } else { const index = comparisonDates.indexOf(date); if (index > -1) { comparisonDates.splice(index, 1); } else { if (comparisonDates.length >= 2) comparisonDates.shift(); comparisonDates.push(date); } renderCalendar(); } } const weekEl = e.target.closest('.week-selector'); if (weekEl) { const weekRowDays = Array.from(weekEl.parentElement.querySelectorAll('.day[data-date]')); const allSelectedInWeek = weekRowDays.every(day => selectedDates.has(day.dataset.date)); weekRowDays.forEach(day => { if (allSelectedInWeek) { selectedDates.delete(day.dataset.date); } else { selectedDates.add(day.dataset.date); } }); updateSelectionUI(); } });
-        document.getElementById('select-weekdays').addEventListener('click', () => { document.querySelectorAll('.day[data-date]:not(.saturday):not(.sunday)').forEach(day => selectedDates.add(day.dataset.date)); updateSelectionUI(); });
-        document.getElementById('select-weekends').addEventListener('click', () => { document.querySelectorAll('.day.saturday[data-date], .day.sunday[data-date]').forEach(day => selectedDates.add(day.dataset.date)); updateSelectionUI(); });
-        document.getElementById('clear-selection').addEventListener('click', () => { selectedDates.clear(); updateSelectionUI(); });
-        ['base-price', 'base-percent'].forEach(id => { document.getElementById(id).addEventListener('input', updateCalculatedPrice); });
-        document.getElementById('apply-bulk-price').addEventListener('click', () => { const basePrice = parseFloat(document.getElementById('base-price').value) || 0; const percent = parseFloat(document.getElementById('base-percent').value) || 0; const finalPrice = Math.round(basePrice * (1 + percent / 100)); if (finalPrice <= 0 || !currentRecordName) { alert('유효한 가격을 입력하고, 먼저 기록을 선택해주세요.'); return; } if (selectedDates.size === 0) { alert('가격을 적용할 날짜를 먼저 선택하세요. (Ctrl/Cmd + 클릭)'); return; } selectedDates.forEach(date => updatePrice(date, finalPrice)); });
-        document.getElementById('apply-increase-percent').addEventListener('click', () => { const percent = parseFloat(document.getElementById('increase-percent').value); if (isNaN(percent) || !currentRecordName) { alert('인상률(%)을 숫자로 입력하고, 먼저 기록을 선택해주세요.'); return; } if (selectedDates.size === 0) { alert('가격을 인상할 날짜를 먼저 선택하세요. (Ctrl/Cmd + 클릭)'); return; } selectedDates.forEach(date => { const currentPrice = prices[date] || 0; if (currentPrice > 0) { const newPrice = Math.round(currentPrice * (1 + percent / 100)); updatePrice(date, newPrice); } }); });
-        document.getElementById('apply-decrease-percent').addEventListener('click', () => { const percent = parseFloat(document.getElementById('decrease-percent').value); if (isNaN(percent) || percent < 0 || !currentRecordName) { alert('인하율(%)을 양수 숫자로 입력하고, 먼저 기록을 선택해주세요.'); return; } if (selectedDates.size === 0) { alert('가격을 인하할 날짜를 먼저 선택하세요. (Ctrl/Cmd + 클릭)'); return; } selectedDates.forEach(date => { const currentPrice = prices[date] || 0; if (currentPrice > 0) { const newPrice = Math.round(currentPrice * (1 - percent / 100)); updatePrice(date, newPrice >= 0 ? newPrice : 0); } }); });
-
-        // --- Initialization ---
-        loadTheme();
-        fetchHolidays();
-        populateRecordsList();
-        listenToMemos();
-        renderCalendar();
-        updateCalculatedPrice();
     });
 </script>
+
 </body>
 </html>
+
